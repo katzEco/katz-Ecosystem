@@ -47,7 +47,7 @@ ifeq ($(MODULE),all)
   override MODULE :=
 endif
 
-.PHONY: help up down stop restart build rebuild ps logs shell shell-db clean pull
+.PHONY: help up down stop restart build rebuild ps logs shell shell-db clean pull dump backup dump-db export-db restore import-db
 
 help: ## Show this help message
 	@echo "Usage: make [target] [module]"
@@ -104,3 +104,19 @@ clean: ## Stop services and wipe volumes (destructive reset)
 
 pull: ## Pull base images
 	$(DC) pull $(MODULE)
+
+dump: ## Dump Postgres & Redis databases to backups/ (alias: backup, export-db)
+	@./scripts/dump.sh
+
+backup: dump ## Alias for dump
+
+dump-db: dump ## Alias for dump
+
+export-db: dump ## Alias for dump
+
+restore: ## Restore Postgres & Redis from backups/ (alias: import-db)
+	@./scripts/restore.sh
+
+restore-db: restore ## Alias for restore
+
+import-db: restore ## Alias for restore

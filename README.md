@@ -132,5 +132,38 @@ Manage the stack with `make` shortcuts or standard Docker Compose commands. Pass
 | **Stop and remove** | `make down` (or `make down utils`) | `docker compose down` / `stop + rm` |
 | **Open container shell**| `make shell todo` | `docker compose exec -it [service] sh` |
 | **Open psql CLI** | `make shell-db` | `docker compose exec -it db_postgres_eco psql ...` |
+| **Dump databases** | `make dump` (or `make backup`) | Dump PostgreSQL & Redis snapshots to `backups/` via `scripts/dump.sh` |
+| **Restore databases** | `make restore` (or `make import-db`) | Restore PostgreSQL & Redis from `backups/` via `scripts/restore.sh` |
 | **Reset all data volumes**| `make clean` | `docker compose down -v` |
 | **Show all make targets**| `make help` | - |
+
+## Database Migration (Between Devices)
+
+### On Source Device
+Export database dumps to `backups/`:
+
+```bash
+make dump
+# or: ./scripts/dump.sh
+```
+
+This creates:
+- `backups/postgres_backup.sql`: Clean SQL dump with schema, sequences, and table data (`api_whitelist`, `categories`, `monitors`, `todo_items`, `webhook_logs`).
+- `backups/redis_dump.rdb`: Redis snapshot dump file.
+- `backups/redis_appendonly.tar.gz`: Redis AOF directory archive.
+
+### On Target Device
+1. Copy or push `backups/` folder and `.env` to target device.
+2. Start the database containers:
+   ```bash
+   make up db
+   ```
+3. Import the backup:
+   ```bash
+   make restore
+   # or: ./scripts/restore.sh
+   ```
+4. Start the application services:
+   ```bash
+   make up
+   ```

@@ -7,3 +7,9 @@
 !.env.example
 
 .agents/
+
+# backups & dumps
+/backups/
+/backup/
+*.rdb
+*.sql
