@@ -10,9 +10,10 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
+      - TZ=${TZ:-Asia/Bangkok}
       # - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-app}
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${POSTGRES_DB:-app}
       # - REDIS_URL=redis://db_redis_eco:${REDIS_PORT:-6379}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${POSTGRES_DB:-app}
       - REDIS_URL=redis://db_redis_eco:6379
       - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
       - DISCORD_TOKEN=${DISCORD_TOKEN:-}
@@ -24,7 +25,7 @@ services:
       db_redis_eco:
         condition: service_healthy
 
-  live_detector:
+  live:
     build:
       context: ./modules/katz-live-detector
       dockerfile: Dockerfile
@@ -34,6 +35,7 @@ services:
       - "${DETECTOR_PORT:-3030}:3030"
     environment:
       - PORT=3030
+      - TZ=${TZ:-Asia/Bangkok}
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${POSTGRES_DB:-app}
       - REDIS_URL=redis://db_redis_eco:6379
       - N8N_DEFAULT_WEBHOOK_URL=${N8N_DEFAULT_WEBHOOK_URL:-}
@@ -41,11 +43,29 @@ services:
       - INITIAL_USERNAMES=${INITIAL_USERNAMES:-}
       - API_KEY=${API_KEY:-}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+      - WEBHOOK_METHOD=${WEBHOOK_METHOD:-GET}
     depends_on:
       db_postgres_eco:
         condition: service_healthy
       db_redis_eco:
         condition: service_healthy
+
+  utils:
+    build:
+      context: ./modules/katz-utils
+      dockerfile: Dockerfile
+    container_name: katz_utils
+    restart: unless-stopped
+    ports:
+      - "${UTILS_PORT:-3050}:3050"
+    environment:
+      - PORT=3050
+      - NODE_ENV=production
+      - TZ=${TZ:-Asia/Bangkok}
+      - TELEGRAM_TOKEN=${UTILS_TELEGRAM_TOKEN:-}
+      - DISCORD_TOKEN=${UTILS_DISCORD_TOKEN:-}
+      - TELEGRAM_ADMIN_ID=${UTILS_TELEGRAM_ADMIN_ID:-${TELEGRAM_ADMIN_ID:-}}
+      - DISCORD_ADMIN_ID=${UTILS_DISCORD_ADMIN_ID:-${DISCORD_ADMIN_ID:-}}
 
   db_postgres_eco:
     image: postgres:17-alpine
@@ -55,6 +75,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-app}
+      TZ: ${TZ:-Asia/Bangkok}
+      PGTZ: ${TZ:-Asia/Bangkok}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -70,6 +92,8 @@ services:
     container_name: redis_katz_eco
     restart: unless-stopped
     command: redis-server --appendonly yes
+    environment:
+      TZ: ${TZ:-Asia/Bangkok}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
