@@ -1,7 +1,55 @@
 services:
-  postgres_eco:
+  todo:
+    build:
+      context: ./modules/katz-todo
+      dockerfile: Dockerfile
+    container_name: katz_todo
+    restart: unless-stopped
+    ports:
+      - "${TODO_PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      # - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-app}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${POSTGRES_DB:-app}
+      # - REDIS_URL=redis://db_redis_eco:${REDIS_PORT:-6379}
+      - REDIS_URL=redis://db_redis_eco:6379
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
+      - DISCORD_TOKEN=${DISCORD_TOKEN:-}
+      - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-}
+      - DISCORD_ADMIN_ID=${DISCORD_ADMIN_ID:-}
+    depends_on:
+      db_postgres_eco:
+        condition: service_healthy
+      db_redis_eco:
+        condition: service_healthy
+
+  live_detector:
+    build:
+      context: ./modules/katz-live-detector
+      dockerfile: Dockerfile
+    container_name: katz_live_detector
+    restart: unless-stopped
+    ports:
+      - "${DETECTOR_PORT:-3030}:3030"
+    environment:
+      - PORT=3030
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${POSTGRES_DB:-app}
+      - REDIS_URL=redis://db_redis_eco:6379
+      - N8N_DEFAULT_WEBHOOK_URL=${N8N_DEFAULT_WEBHOOK_URL:-}
+      - CHECK_INTERVAL_SECONDS=${CHECK_INTERVAL_SECONDS:-60}
+      - INITIAL_USERNAMES=${INITIAL_USERNAMES:-}
+      - API_KEY=${API_KEY:-}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+    depends_on:
+      db_postgres_eco:
+        condition: service_healthy
+      db_redis_eco:
+        condition: service_healthy
+
+  db_postgres_eco:
     image: postgres:17-alpine
-    container_name: postgres_katz-eco
+    container_name: postgres_katz_eco
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -10,22 +58,22 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - katz-pg-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-app}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  redis_eco:
+  db_redis_eco:
     image: redis:7-alpine
-    container_name: redis_katz-eco
+    container_name: redis_katz_eco
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis_data:/data
+      - katz-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -33,5 +81,5 @@ services:
       retries: 5
 
 volumes:
-  postgres_data:
-  redis_data:
+  katz-pg-data:
+  katz-redis-data:
