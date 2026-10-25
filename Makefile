@@ -3,10 +3,11 @@
 DC ?= docker compose
 
 # Support both positional args (e.g. make up core) and variable (e.g. make up m=core)
-TARGETS_WITH_ARGS := up down stop restart build rebuild ps logs shell
+TARGETS_WITH_ARGS := up down stop restart build rebuild ps logs shell restore restore-db import-db
 
 ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),$(TARGETS_WITH_ARGS)))
   RAW_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval .PHONY: $(RAW_ARGS))
   $(eval $(RAW_ARGS):;@:)
 endif
 
@@ -105,7 +106,7 @@ clean: ## Stop services and wipe volumes (destructive reset)
 pull: ## Pull base images
 	$(DC) pull $(MODULE)
 
-dump: ## Dump Postgres & Redis databases to backups/ (alias: backup, export-db)
+dump: ## Dump Postgres & Redis databases to zip in backups/ (alias: backup, export-db)
 	@./scripts/dump.sh
 
 backup: dump ## Alias for dump
@@ -114,8 +115,12 @@ dump-db: dump ## Alias for dump
 
 export-db: dump ## Alias for dump
 
-restore: ## Restore Postgres & Redis from backups/ (alias: import-db)
-	@./scripts/restore.sh
+file ?=
+zip ?=
+RESTORE_FILE ?= $(strip $(if $(file),$(file),$(if $(zip),$(zip),$(RAW_ARGS))))
+
+restore: ## Restore Postgres & Redis from zip archive (default: backups/backup_latest.zip)
+	@./scripts/restore.sh $(RESTORE_FILE)
 
 restore-db: restore ## Alias for restore
 

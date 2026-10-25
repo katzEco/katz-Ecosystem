@@ -140,7 +140,7 @@ Manage the stack with `make` shortcuts or standard Docker Compose commands. Pass
 ## Database Migration (Between Devices)
 
 ### On Source Device
-Export database dumps to `backups/`:
+Dump databases to a self-contained `.zip` package:
 
 ```bash
 make dump
@@ -148,20 +148,29 @@ make dump
 ```
 
 This creates:
-- `backups/postgres_backup.sql`: Clean SQL dump with schema, sequences, and table data (`api_whitelist`, `categories`, `monitors`, `todo_items`, `webhook_logs`).
-- `backups/redis_dump.rdb`: Redis snapshot dump file.
-- `backups/redis_appendonly.tar.gz`: Redis AOF directory archive.
+- `backups/backup_latest.zip` (symlinked/copied for easy restore)
+- `backups/backup_YYYYMMDD_HHMMSS.zip` (timestamped archive)
+
+Each zip contains:
+- `postgres_backup.sql`: Full schema and table data (`api_whitelist`, `categories`, `monitors`, `todo_items`, `webhook_logs`).
+- `redis_dump.rdb`: Redis snapshot dump.
+- `redis_appendonly.tar.gz`: Redis AOF directory archive.
+- `metadata.json`: Timestamp and payload manifest.
 
 ### On Target Device
-1. Copy or push `backups/` folder and `.env` to target device.
+1. Transfer `backups/backup_latest.zip` (or timestamped zip) and `.env` to target device.
 2. Start the database containers:
    ```bash
    make up db
    ```
-3. Import the backup:
+3. Restore from the zip package:
    ```bash
+   # Restore default (backups/backup_latest.zip)
    make restore
-   # or: ./scripts/restore.sh
+
+   # Or specify a particular zip file:
+   make restore backups/backup_20261025_213311.zip
+   # or: ./scripts/restore.sh backups/backup_20261025_213311.zip
    ```
 4. Start the application services:
    ```bash
