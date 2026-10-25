@@ -1,6 +1,7 @@
 [submodule "modules/katz-todo"]
 	path = modules/katz-todo
 	url = https://github.com/katzEco/katz-todo
+	branch = main
 [submodule "modules/katz-live-detector"]
 	path = modules/katz-live-detector
 	url = https://github.com/katzEco/katz-live-detector
