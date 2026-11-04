@@ -8,3 +8,11 @@
 [submodule "modules/katz-utils"]
 	path = modules/katz-utils
 	url = https://github.com/katzEco/katz-utils-docker
+[submodule "modules/gatekeeper_bot"]
+	path = modules/gatekeeper_bot
+	url = https://github.com/katzEco/katz-gatekeeper
+	branch = main
+[submodule "modules/gatekeeper"]
+	path = modules/gatekeeper
+	url = https://github.com/katzEco/katz-gatekeeper
+	branch = main
