@@ -1,6 +1,6 @@
 # Katz Eco Infrastructure
 
-Docker Compose setup and development harness for the Katz ecosystem services: **Todo**, **Live Detector**, **Utils**, and underlying **PostgreSQL** and **Redis** data stores.
+Docker Compose setup and development harness for the Katz ecosystem services: **Todo**, **Live Detector**, **Utils**, **Gatekeeper**, and underlying **PostgreSQL** and **Redis** data stores.
 
 ## Services
 
@@ -9,6 +9,7 @@ Docker Compose setup and development harness for the Katz ecosystem services: **
 | `todo` | [`./modules/katz-todo`](./modules/katz-todo) | `katz_todo` | `3000` | Web dashboard & Telegram/Discord task bot |
 | `live` | [`./modules/katz-live-detector`](./modules/katz-live-detector) | `katz_live_detector` | `3030` | TikTok live detector & n8n webhook dispatcher |
 | `utils` | [`./modules/katz-utils`](./modules/katz-utils) | `katz_utils` | `3050` | Chat moderation (`/clean`), telemetry & health API |
+| `gatekeeper` | [`./modules/gatekeeper`](./modules/gatekeeper) | `katz_gatekeeper` | `3003` | Stateless Discord interaction bot & room access control |
 | `db_postgres_eco` | `postgres:17-alpine` | `postgres_katz_eco` | `5432` | `katz-pg-data` volume |
 | `db_redis_eco` | `redis:7-alpine` | `redis_katz_eco` | `6379` | `katz-redis-data` volume (AOF enabled) |
 
@@ -17,6 +18,7 @@ Docker Compose setup and development harness for the Katz ecosystem services: **
 - **[Katz Todo](./modules/katz-todo)**: High-performance task management system built on Hono, native `Bun.SQL`, and `Bun.RedisClient`. Features a brutalist web dashboard, category management, bot command whitelisting, and dual Telegram/Discord bot integrations (`/todo`, `!todo`).
 - **[Katz Live Detector](./modules/katz-live-detector)**: Real-time TikTok live monitoring daemon. Tracks creator streams via dual-engine polling, caches stream states in Redis, persists audit logs in PostgreSQL, and dispatches `live_started` / `live_ended` event payloads to an n8n webhook workflow.
 - **[Katz Utils](./modules/katz-utils)**: Operational utility bot for Telegram and Discord providing bulk chat purging (`/clean`, `!clean`), roundtrip latency checks (`/ping`), host telemetry (`/info`), and an HTTP health endpoint.
+- **[Katz Gatekeeper](./modules/gatekeeper)**: Stateless Discord bot and web interaction engine built on Bun, Hono, native Ed25519 crypto verification, and Redis-cached server/room whitelisting.
 
 ## Prerequisites
 
@@ -105,16 +107,27 @@ Docker Compose setup and development harness for the Katz ecosystem services: **
 | `UTILS_TELEGRAM_ADMIN_ID`| Optional Telegram Admin ID override (falls back to `TELEGRAM_ADMIN_ID`) | `""` |
 | `UTILS_DISCORD_ADMIN_ID` | Optional Discord Admin ID override (falls back to `DISCORD_ADMIN_ID`) | `""` |
 
+### Gatekeeper Service
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `GATEKEEPER_PORT` | Host port mapped to Gatekeeper (`3000` in container) | `3003` |
+| `GATEKEEPER_DB` | Database name on PostgreSQL service | `gatekeeper` |
+| `GATEKEEPER_DISCORD_APPLICATION_ID` | Discord Application / Client ID | `""` |
+| `GATEKEEPER_DISCORD_PUBLIC_KEY` | Discord Application Public Key (Ed25519 signature checks) | `""` |
+| `GATEKEEPER_DISCORD_TOKEN` | Discord Bot Token for REST API & command sync | `""` |
+| `GATEKEEPER_DISCORD_GUILD_ID` | Optional Guild ID for instant slash command testing | `""` |
+
 ## Common Commands
 
 Manage the stack with `make` shortcuts or standard Docker Compose commands. Pass service names as positional arguments (`make up core`, `make down utils`) or via `m=<module>`:
 
 ### Available Modules & Presets
 - `core`: `todo` + `live`
-- `pro`: `todo` + `live` + `utils`
+- `pro`: `todo` + `live` + `utils` + `gatekeeper`
 - `todo`: `katz-todo`
 - `live`: `katz-live-detector` (aliases: `detector`, `live_detector`)
 - `utils`: `katz-utils`
+- `gatekeeper`: `gatekeeper` (alias: `gk`)
 - `db`: `postgres` + `redis`
 
 ### Command Reference
