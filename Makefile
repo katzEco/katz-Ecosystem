@@ -17,7 +17,7 @@ module ?=
 MODULE ?= $(strip $(if $(m),$(m),$(if $(s),$(s),$(if $(module),$(module),$(RAW_ARGS)))))
 
 CORE := live todo
-PRO := live todo utils
+PRO := live todo utils gatekeeper
 
 # Shorthand alias mappings for service names
 ifeq ($(MODULE),core)
@@ -31,6 +31,9 @@ ifeq ($(MODULE),detector)
 endif
 ifeq ($(MODULE),live-detector)
   override MODULE := live
+endif
+ifeq ($(MODULE),gk)
+  override MODULE := gatekeeper
 endif
 ifeq ($(MODULE),live_detector)
   override MODULE := live
@@ -56,10 +59,11 @@ help: ## Show this help message
 	@echo ""
 	@echo "Modules:"
 	@echo "  core        -> todo + live"
-	@echo "  pro         -> todo + live + utils"
+	@echo "  pro         -> todo + live + utils + gatekeeper"
 	@echo "  todo        -> katz-todo"
 	@echo "  live        -> katz-live-detector (aliases: detector, live_detector)"
 	@echo "  utils       -> katz-utils"
+	@echo "  gatekeeper  -> gatekeeper (alias: gk)"
 	@echo "  db          -> postgres + redis (aliases: postgres, redis)"
 	@echo ""
 	@echo "Targets:"

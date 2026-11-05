@@ -67,6 +67,30 @@ services:
       - TELEGRAM_ADMIN_ID=${UTILS_TELEGRAM_ADMIN_ID:-${TELEGRAM_ADMIN_ID:-}}
       - DISCORD_ADMIN_ID=${UTILS_DISCORD_ADMIN_ID:-${DISCORD_ADMIN_ID:-}}
 
+  gatekeeper:
+    build:
+      context: ./modules/gatekeeper
+      dockerfile: Dockerfile
+    container_name: katz_gatekeeper
+    restart: unless-stopped
+    ports:
+      - "${GATEKEEPER_PORT:-3003}:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - TZ=${TZ:-Asia/Bangkok}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db_postgres_eco:5432/${GATEKEEPER_DB:-gatekeeper}
+      - REDIS_URL=redis://db_redis_eco:6379
+      - DISCORD_APPLICATION_ID=${GATEKEEPER_DISCORD_APPLICATION_ID:-${DISCORD_APPLICATION_ID:-}}
+      - DISCORD_PUBLIC_KEY=${GATEKEEPER_DISCORD_PUBLIC_KEY:-${DISCORD_PUBLIC_KEY:-}}
+      - DISCORD_TOKEN=${GATEKEEPER_DISCORD_TOKEN:-${DISCORD_TOKEN:-}}
+      - DISCORD_GUILD_ID=${GATEKEEPER_DISCORD_GUILD_ID:-${DISCORD_GUILD_ID:-}}
+    depends_on:
+      db_postgres_eco:
+        condition: service_healthy
+      db_redis_eco:
+        condition: service_healthy
+
   db_postgres_eco:
     image: postgres:17-alpine
     container_name: postgres_katz_eco
